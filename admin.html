@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - Task Management</title>
+<style>
+body {font-family: Arial; background: url('min.jpg') no-repeat center center fixed; background-size: cover; margin: 0; padding: 20px; color: #fff;}
+h1 {text-align:center; margin-bottom:20px; text-shadow:1px 1px 2px #000;}
+.flex-container {display:flex; flex-wrap:wrap; gap:20px; justify-content:space-around;}
+.container {background:rgba(0,0,0,0.6); padding:15px; border-radius:8px; width:30%; min-width:300px; box-shadow:0 2px 6px rgba(0,0,0,0.4);}
+input, select {margin:5px; padding:6px; font-size:14px; border-radius:4px; border:none;}
+button {padding:6px 12px; margin:5px; border:none; border-radius:5px; background-color:#28a745; color:white; cursor:pointer;}
+ul {list-style:none; padding-left:0; margin-top:10px;}
+li {background:rgba(255,255,255,0.1); padding:6px; margin-bottom:4px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;}
+.deleteBtn {background-color:#dc3545; margin-left:10px;}
+
+/* Login overlay */
+#loginOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85); display:flex; justify-content:center; align-items:center; z-index:9999; color:#fff; font-family:Arial;}
+#loginOverlay div{background:#222; padding:30px; border-radius:8px; box-shadow:0 0 10px #000; text-align:center;}
+#loginOverlay input{padding:8px; border-radius:4px; border:none; margin:10px; width:200px;}
+#loginOverlay button{padding:8px 15px; border:none; border-radius:5px; background:#28a745; color:#fff; cursor:pointer;}
+#loginError{color:red; display:none; margin-top:10px;}
+</style>
+</head>
+<body>
+
+<!-- Login Overlay -->
+<div id="loginOverlay">
+  <div>
+    <h2>Admin Login</h2>
+    <input type="password" id="loginPass" placeholder="Enter password"><br>
+    <button onclick="checkLogin()">Login</button>
+    <p id="loginError">Wrong password</p>
+  </div>
+</div>
+
+<!-- Protected Content -->
+<div id="protectedContent" style="display:none;">
+<h1>Admin - Manage Tasks</h1>
+<div class="flex-container">
+
+  <!-- Time Bound Tasks -->
+  <div class="container">
+    <h2>Time Bound Tasks</h2>
+    <input type="text" id="timeTask" placeholder="Enter Task">
+    <input type="date" id="timeTaskDate">
+    <button onclick="addTimeTask()">Save Task</button>
+    <ul id="timeTaskList"></ul>
+  </div>
+
+  <!-- Repetitive Tasks -->
+  <div class="container">
+    <h2>Repetitive Tasks</h2>
+    <input type="text" id="repTask" placeholder="Enter Task"><br>
+    <select id="repFrequency">
+      <option value="every">Every</option>
+      <option value="first">First</option>
+      <option value="second">Second</option>
+      <option value="third">Third</option>
+      <option value="fourth">Fourth</option>
+    </select>
+    <select id="repDay">
+      <option value="monday">Monday</option>
+      <option value="tuesday">Tuesday</option>
+      <option value="wednesday">Wednesday</option>
+      <option value="thursday">Thursday</option>
+      <option value="friday">Friday</option>
+      <option value="saturday">Saturday</option>
+      <option value="sunday">Sunday</option>
+    </select><br>
+    <input type="number" id="repDate" placeholder="DD" min="1" max="31" style="width:60px">
+    <button onclick="addRepTask()">Save Task</button>
+    <ul id="repTaskList"></ul>
+  </div>
+
+  <!-- Birthday/Anniversary -->
+  <div class="container">
+    <h2>Birthday / Anniversary</h2>
+    <input type="text" id="bdayName" placeholder="Name / Event">
+    <input type="date" id="bdayDate">
+    <button onclick="addBday()">Save</button>
+    <ul id="bdayList"></ul>
+  </div>
+
+  <!-- Everyday Tasks -->
+  <div class="container">
+    <h2>Everyday Tasks</h2>
+    <input type="text" id="everydayTask" placeholder="Enter Task">
+    <button onclick="addEverydayTask()">Save</button>
+    <ul id="everydayList"></ul>
+  </div>
+
+</div>
+</div>
+
+<script>
+const adminPassword = "Admin123"; // CHANGE THIS
+
+function checkLogin(){
+  const val=document.getElementById('loginPass').value;
+  if(val===adminPassword){
+    sessionStorage.setItem('authOK_admin','yes');
+    document.getElementById('loginOverlay').style.display='none';
+    document.getElementById('protectedContent').style.display='block';
+  } else { document.getElementById('loginError').style.display='block'; }
+}
+
+window.onload=function(){
+  if(sessionStorage.getItem('authOK_admin')==='yes'){
+    document.getElementById('loginOverlay').style.display='none';
+    document.getElementById('protectedContent').style.display='block';
+  }
+  loadTasks();
+};
+
+/* TASK FUNCTIONS */
+function addTimeTask(){const t=document.getElementById('timeTask').value,d=document.getElementById('timeTaskDate').value;if(t&&d){let a=JSON.parse(localStorage.getItem('timeTasks'))||[];a.push({task:t,date:d});localStorage.setItem('timeTasks',JSON.stringify(a));document.getElementById('timeTask').value='';document.getElementById('timeTaskDate').value='';loadTasks();}}
+function deleteTimeTask(i){let a=JSON.parse(localStorage.getItem('timeTasks'))||[];a.splice(i,1);localStorage.setItem('timeTasks',JSON.stringify(a));loadTasks();}
+function addRepTask(){const t=document.getElementById('repTask').value,f=document.getElementById('repFrequency').value,d=document.getElementById('repDay').value,rd=document.getElementById('repDate').value;if(t){let a=JSON.parse(localStorage.getItem('repTasks'))||[];a.push({task:t,frequency:f,day:d,repDate:rd});localStorage.setItem('repTasks',JSON.stringify(a));document.getElementById('repTask').value='';document.getElementById('repDate').value='';loadTasks();}}
+function deleteRepTask(i){let a=JSON.parse(localStorage.getItem('repTasks'))||[];a.splice(i,1);localStorage.setItem('repTasks',JSON.stringify(a));loadTasks();}
+function addBday(){const n=document.getElementById('bdayName').value,d=document.getElementById('bdayDate').value;if(n&&d){let a=JSON.parse(localStorage.getItem('bdayTasks'))||[];a.push({name:n,date:d});localStorage.setItem('bdayTasks',JSON.stringify(a));document.getElementById('bdayName').value='';document.getElementById('bdayDate').value='';loadTasks();}}
+function deleteBday(i){let a=JSON.parse(localStorage.getItem('bdayTasks'))||[];a.splice(i,1);localStorage.setItem('bdayTasks',JSON.stringify(a));loadTasks();}
+function addEverydayTask(){const t=document.getElementById('everydayTask').value;if(t){let a=JSON.parse(localStorage.getItem('everydayTasks'))||[];a.push({task:t});localStorage.setItem('everydayTasks',JSON.stringify(a));document.getElementById('everydayTask').value='';loadTasks();}}
+function deleteEverydayTask(i){let a=JSON.parse(localStorage.getItem('everydayTasks'))||[];a.splice(i,1);localStorage.setItem('everydayTasks',JSON.stringify(a));loadTasks();}
+function loadTasks(){
+  const tList=document.getElementById('timeTaskList'); tList.innerHTML=''; let tTasks=JSON.parse(localStorage.getItem('timeTasks'))||[]; tTasks.forEach((t,i)=>{let li=document.createElement('li'); li.textContent=`${t.task} (Due: ${t.date})`; let btn=document.createElement('button'); btn.textContent='X'; btn.className='deleteBtn'; btn.onclick=()=>deleteTimeTask(i); li.appendChild(btn); tList.appendChild(li);});
+  const rList=document.getElementById('repTaskList'); rList.innerHTML=''; let rTasks=JSON.parse(localStorage.getItem('repTasks'))||[]; rTasks.forEach((t,i)=>{let li=document.createElement('li'); li.textContent=t.repDate?`${t.task} (Every month on ${t.repDate})`:`${t.task} (${t.frequency} ${t.day})`; let btn=document.createElement('button'); btn.textContent='X'; btn.className='deleteBtn'; btn.onclick=()=>deleteRepTask(i); li.appendChild(btn); rList.appendChild(li);});
+  const bList=document.getElementById('bdayList'); bList.innerHTML=''; let bTasks=JSON.parse(localStorage.getItem('bdayTasks'))||[]; bTasks.forEach((t,i)=>{let li=document.createElement('li'); li.textContent=`${t.name} (Date: ${t.date})`; let btn=document.createElement('button'); btn.textContent='X'; btn.className='deleteBtn'; btn.onclick=()=>deleteBday(i); li.appendChild(btn); bList.appendChild(li);});
+  const eList=document.getElementById('everydayList'); eList.innerHTML=''; let eTasks=JSON.parse(localStorage.getItem('everydayTasks'))||[]; eTasks.forEach((t,i)=>{let li=document.createElement('li'); li.textContent=t.task; let btn=document.createElement('button'); btn.textContent='X'; btn.className='deleteBtn'; btn.onclick=()=>deleteEverydayTask(i); li.appendChild(btn); eList.appendChild(li);});
+}
+</script>
+</body>
+</html>
