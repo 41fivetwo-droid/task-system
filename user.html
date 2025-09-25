@@ -3,23 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>User - Generate Task</title>
+<title>User Task Generator</title>
 <style>
-body{font-family:Arial;background:url('min.jpg') no-repeat center center fixed;background-size:cover;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;color:#fff;backdrop-filter:brightness(0.6);}
-h1{margin-bottom:20px;text-shadow:1px 1px 2px #000;}
-textarea{width:350px;height:250px;padding:10px;font-size:16px;border-radius:6px;border:none;outline:none;resize:none;}
-.btn{padding:10px 20px;margin:10px;border:none;border-radius:5px;cursor:pointer;font-size:16px;}
-.generate{background-color:#28a745;color:white;}
-.copy{background-color:#007bff;color:white;}
-#loginOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;justify-content:center;align-items:center;z-index:9999;color:#fff;font-family:Arial;}
-#loginOverlay div{background:#222;padding:30px;border-radius:8px;box-shadow:0 0 10px #000;text-align:center;}
-#loginOverlay input{padding:8px;border-radius:4px;border:none;margin:10px;width:200px;}
-#loginOverlay button{padding:8px 15px;border:none;border-radius:5px;background:#28a745;color:#fff;cursor:pointer;}
+body {
+  background: url('min.jpg') no-repeat center center fixed;
+  background-size: cover;
+  font-family: Arial, sans-serif;
+  color: #fff;
+  text-align: center;
+  padding: 20px;
+}
+h1 {text-shadow:1px 1px 3px #000;}
+textarea {
+  width: 90%;
+  height: 300px;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  resize: none;
+}
+button {
+  padding: 10px 20px;
+  margin: 5px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+}
+.generate {background-color: #28a745;color:#fff;}
+.copy {background-color:#007bff;color:#fff;}
+/* login overlay */
+#loginOverlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.85);
+  display:flex;justify-content:center;align-items:center;
+  z-index:9999;color:#fff;font-family:Arial;
+}
+#loginOverlay div{
+  background:#222;padding:30px;border-radius:8px;
+  box-shadow:0 0 10px #000;text-align:center;
+}
+#loginOverlay input{
+  padding:8px;border-radius:4px;border:none;margin:10px;width:200px;
+}
+#loginOverlay button{
+  padding:8px 15px;border:none;border-radius:5px;
+  background:#28a745;color:#fff;cursor:pointer;
+}
 #loginError{color:red;display:none;margin-top:10px;}
 </style>
 </head>
 <body>
 
+<!-- LOGIN -->
 <div id="loginOverlay">
   <div>
     <h2>User Login</h2>
@@ -29,22 +66,26 @@ textarea{width:350px;height:250px;padding:10px;font-size:16px;border-radius:6px;
   </div>
 </div>
 
+<!-- CONTENT -->
 <div id="protectedContent" style="display:none;">
-<h1>Hey Generate Your Task For Today</h1>
-<button class="btn generate" onclick="generateTask()">Generate</button>
-<textarea id="taskBox" placeholder="Your tasks will appear here..."></textarea><br>
-<button class="btn copy" onclick="copyTask()">Copy to Clipboard</button>
+  <h1>Hey Generate Your Task For Today</h1>
+  <button class="generate" onclick="generateTasks()">Generate</button>
+  <textarea id="taskBox" placeholder="Your tasks will appear here..."></textarea><br>
+  <button class="copy" onclick="copyTask()">Copy to Clipboard</button>
 </div>
 
 <script>
 const userPassword="User123"; // CHANGE THIS
+
 function checkLogin(){
   const val=document.getElementById('loginPass').value;
   if(val===userPassword){
     sessionStorage.setItem('authOK_user','yes');
     document.getElementById('loginOverlay').style.display='none';
     document.getElementById('protectedContent').style.display='block';
-  } else { document.getElementById('loginError').style.display='block'; }
+  } else {
+    document.getElementById('loginError').style.display='block';
+  }
 }
 window.onload=function(){
   if(sessionStorage.getItem('authOK_user')==='yes'){
@@ -53,28 +94,94 @@ window.onload=function(){
   }
 };
 
-/* Generate tasks from localStorage (same logic as before) */
-function generateTask(){ 
-  const today=new Date(),y=today.getFullYear(),m=String(today.getMonth()+1).padStart(2,'0'),d=String(today.getDate()).padStart(2,'0');
-  const todayStr=`${y}-${m}-${d}`;
-  let tasks=[];
+function generateTasks(){
+  const today = new Date();
+  const todayMidnight = new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  let tasks = [];
 
-  let timeTasks=JSON.parse(localStorage.getItem('timeTasks'))||[];
-  timeTasks.forEach(t=>{if(t.date===todayStr) tasks.push(t.task+" (Due today)");});
+  // Helper to compute day diff
+  const dayDiff = (dueDate)=>{
+    const dueMidnight = new Date(dueDate.getFullYear(),dueDate.getMonth(),dueDate.getDate());
+    return Math.floor((dueMidnight - todayMidnight)/(1000*60*60*24));
+  };
 
-  let repTasks=JSON.parse(localStorage.getItem('repTasks'))||[];
-  repTasks.forEach(t=>{if(t.repDate && parseInt(t.repDate)===today.getDate()) tasks.push(t.task+" (Monthly)");});
-  
-  let bTasks=JSON.parse(localStorage.getItem('bdayTasks'))||[];
-  bTasks.forEach(t=>{let e=new Date(t.date); if(e.getDate()===today.getDate() && e.getMonth()===today.getMonth()) tasks.push("🎉 "+t.name+" today!");});
-  
+  // TIME BOUND TASKS
+  let timeTasks = JSON.parse(localStorage.getItem('timeTasks'))||[];
+  timeTasks.forEach(t=>{
+    const due = new Date(t.date);
+    const diff = dayDiff(due);
+    if(diff===0) tasks.push(`${t.task} (Due today)`);
+    if(diff===1) tasks.push(`${t.task} (Due tomorrow)`);
+    if(diff===2) tasks.push(`${t.task} (Due in 2 days)`);
+  });
+
+  // REPETITIVE TASKS
+  let repTasks = JSON.parse(localStorage.getItem('repTasks'))||[];
+  repTasks.forEach(t=>{
+    // monthly date based
+    if(t.repDate){
+      const diff = t.repDate==today.getDate()?0:
+                   (t.repDate==(today.getDate()+1)?1:
+                   (t.repDate==(today.getDate()+2)?2:-999));
+      if(diff===0) tasks.push(`${t.task} (Monthly today)`);
+      if(diff===1) tasks.push(`${t.task} (Monthly tomorrow)`);
+      if(diff===2) tasks.push(`${t.task} (Monthly in 2 days)`);
+    }
+    // weekly based
+    if(t.week && t.weekday){
+      // compute the nth weekday of this month
+      const nth = ["first","second","third","fourth"];
+      const wantedIndex = nth.indexOf(t.week.toLowerCase())+1; // 1,2,3,4
+      const dayNames=["sun","mon","tue","wed","thu","fri","sat"];
+      const wantedDay = dayNames.indexOf(t.weekday.toLowerCase().slice(0,3));
+      // compute all occurrences this month
+      const monthStart=new Date(today.getFullYear(),today.getMonth(),1);
+      let count=0, candidate=null;
+      for(let d=1;d<=31;d++){
+        let temp=new Date(today.getFullYear(),today.getMonth(),d);
+        if(temp.getMonth()!=today.getMonth()) break;
+        if(temp.getDay()===wantedDay){
+          count++;
+          if(count===wantedIndex){candidate=temp;break;}
+        }
+      }
+      if(candidate){
+        const diff=dayDiff(candidate);
+        if(diff===0) tasks.push(`${t.task} (This ${t.week} ${t.weekday})`);
+        if(diff===1) tasks.push(`${t.task} (Tomorrow: ${t.week} ${t.weekday})`);
+        if(diff===2) tasks.push(`${t.task} (In 2 days: ${t.week} ${t.weekday})`);
+      }
+    }
+  });
+
+  // BIRTHDAYS / ANNIVERSARIES
+  let bTasks = JSON.parse(localStorage.getItem('bdayTasks'))||[];
+  bTasks.forEach(t=>{
+    const e=new Date(t.date);
+    // upcoming date this year
+    const due=new Date(today.getFullYear(),e.getMonth(),e.getDate());
+    const diff=dayDiff(due);
+    if(diff===0) tasks.push(`🎉 ${t.name} today!`);
+    if(diff===1) tasks.push(`🎉 ${t.name} tomorrow!`);
+    if(diff===2) tasks.push(`🎉 ${t.name} in 2 days!`);
+  });
+
+  // EVERYDAY TASKS (always show)
   let eTasks=JSON.parse(localStorage.getItem('everydayTasks'))||[];
-  eTasks.forEach(t=>tasks.push(t.task+" (Everyday)"));
+  eTasks.forEach(t=>{
+    tasks.push(`${t.task} (Everyday)`);
+  });
 
-  document.getElementById('taskBox').value = tasks.length?tasks.join("\n"):"No tasks for today!";
+  document.getElementById('taskBox').value = tasks.length?tasks.join("\n"):"No tasks!";
 }
 
-function copyTask(){ const t=document.getElementById('taskBox'); t.select(); t.setSelectionRange(0,99999); document.execCommand('copy'); alert('Tasks copied!'); }
+function copyTask(){
+  const t=document.getElementById('taskBox');
+  t.select();
+  t.setSelectionRange(0,99999);
+  document.execCommand('copy');
+  alert('Tasks copied!');
+}
 </script>
 </body>
 </html>
