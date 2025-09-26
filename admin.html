@@ -97,6 +97,7 @@ li {background:rgba(255,255,255,0.1); padding:6px; margin-bottom:4px; border-rad
 <script>
 const adminPassword = "Admin123"; // CHANGE THIS
 
+// ---------- LOGIN ----------
 function checkLogin(){
   const val=document.getElementById('loginPass').value;
   if(val===adminPassword){
@@ -114,20 +115,150 @@ window.onload=function(){
   loadTasks();
 };
 
-/* TASK FUNCTIONS */
-function addTimeTask(){const t=document.getElementById('timeTask').value,d=document.getElementById('timeTaskDate').value;if(t&&d){let a=JSON.parse(localStorage.getItem('timeTasks'))||[];a.push({task:t,date:d});localStorage.setItem('timeTasks',JSON.stringify(a));document.getElementById('timeTask').value='';document.getElementById('timeTaskDate').value='';loadTasks();}}
-function deleteTimeTask(i){let a=JSON.parse(localStorage.getItem('timeTasks'))||[];a.splice(i,1);localStorage.setItem('timeTasks',JSON.stringify(a));loadTasks();}
-function addRepTask(){const t=document.getElementById('repTask').value,f=document.getElementById('repFrequency').value,d=document.getElementById('repDay').value,rd=document.getElementById('repDate').value;if(t){let a=JSON.parse(localStorage.getItem('repTasks'))||[];a.push({task:t,frequency:f,day:d,repDate:rd});localStorage.setItem('repTasks',JSON.stringify(a));document.getElementById('repTask').value='';document.getElementById('repDate').value='';loadTasks();}}
-function deleteRepTask(i){let a=JSON.parse(localStorage.getItem('repTasks'))||[];a.splice(i,1);localStorage.setItem('repTasks',JSON.stringify(a));loadTasks();}
-function addBday(){const n=document.getElementById('bdayName').value,d=document.getElementById('bdayDate').value;if(n&&d){let a=JSON.parse(localStorage.getItem('bdayTasks'))||[];a.push({name:n,date:d});localStorage.setItem('bdayTasks',JSON.stringify(a));document.getElementById('bdayName').value='';document.getElementById('bdayDate').value='';loadTasks();}}
-function deleteBday(i){let a=JSON.parse(localStorage.getItem('bdayTasks'))||[];a.splice(i,1);localStorage.setItem('bdayTasks',JSON.stringify(a));loadTasks();}
-function addEverydayTask(){const t=document.getElementById('everydayTask').value;if(t){let a=JSON.parse(localStorage.getItem('everydayTasks'))||[];a.push({task:t});localStorage.setItem('everydayTasks',JSON.stringify(a));document.getElementById('everydayTask').value='';loadTasks();}}
-function deleteEverydayTask(i){let a=JSON.parse(localStorage.getItem('everydayTasks'))||[];a.splice(i,1);localStorage.setItem('everydayTasks',JSON.stringify(a));loadTasks();}
+// ---------- TASK FUNCTIONS ----------
+
+// Time-bound tasks
+function addTimeTask(){
+  const t=document.getElementById('timeTask').value;
+  const d=document.getElementById('timeTaskDate').value;
+  if(t && d){
+    let a=JSON.parse(localStorage.getItem('timeTasks'))||[];
+    a.push({task:t,date:d});
+    localStorage.setItem('timeTasks',JSON.stringify(a));
+    document.getElementById('timeTask').value='';
+    document.getElementById('timeTaskDate').value='';
+    loadTasks();
+  }
+}
+function deleteTimeTask(i){
+  let a=JSON.parse(localStorage.getItem('timeTasks'))||[];
+  a.splice(i,1);
+  localStorage.setItem('timeTasks',JSON.stringify(a));
+  loadTasks();
+}
+
+// Repetitive tasks (fixed)
+function addRepTask(){
+  const t = document.getElementById('repTask').value;
+  const f = document.getElementById('repFrequency').value;
+  const d = document.getElementById('repDay').value;
+  const rd = document.getElementById('repDate').value;
+
+  if(!t) return;
+
+  let a = JSON.parse(localStorage.getItem('repTasks')) || [];
+
+  // Monthly task
+  if(rd){
+    a.push({ task: t, repDate: parseInt(rd) });
+  }
+
+  // Weekly task
+  if(f === 'every'){ // Only "Every" frequency counts as weekly
+    a.push({
+      task: t,
+      weekly: true,
+      weekday: d.toLowerCase().slice(0,3) // store "mon", "tue", etc.
+    });
+  }
+
+  localStorage.setItem('repTasks', JSON.stringify(a));
+  document.getElementById('repTask').value='';
+  document.getElementById('repDate').value='';
+  loadTasks();
+}
+function deleteRepTask(i){
+  let a=JSON.parse(localStorage.getItem('repTasks'))||[];
+  a.splice(i,1);
+  localStorage.setItem('repTasks',JSON.stringify(a));
+  loadTasks();
+}
+
+// Birthday / Anniversary
+function addBday(){
+  const n=document.getElementById('bdayName').value;
+  const d=document.getElementById('bdayDate').value;
+  if(n && d){
+    let a=JSON.parse(localStorage.getItem('bdayTasks'))||[];
+    a.push({name:n,date:d});
+    localStorage.setItem('bdayTasks',JSON.stringify(a));
+    document.getElementById('bdayName').value='';
+    document.getElementById('bdayDate').value='';
+    loadTasks();
+  }
+}
+function deleteBday(i){
+  let a=JSON.parse(localStorage.getItem('bdayTasks'))||[];
+  a.splice(i,1);
+  localStorage.setItem('bdayTasks',JSON.stringify(a));
+  loadTasks();
+}
+
+// Everyday tasks
+function addEverydayTask(){
+  const t=document.getElementById('everydayTask').value;
+  if(t){
+    let a=JSON.parse(localStorage.getItem('everydayTasks'))||[];
+    a.push({task:t});
+    localStorage.setItem('everydayTasks',JSON.stringify(a));
+    document.getElementById('everydayTask').value='';
+    loadTasks();
+  }
+}
+function deleteEverydayTask(i){
+  let a=JSON.parse(localStorage.getItem('everydayTasks'))||[];
+  a.splice(i,1);
+  localStorage.setItem('everydayTasks',JSON.stringify(a));
+  loadTasks();
+}
+
+// Load tasks
 function loadTasks(){
-  const tList=document.getElementById('timeTaskList'); tList.innerHTML=''; let tTasks=JSON.parse(localStorage.getItem('timeTasks'))||[]; tTasks.forEach((t,i)=>{let li=document.createElement('li'); li.textContent=`${t.task} (Due: ${t.date})`; let btn=document.createElement('button'); btn.textContent='X'; btn.className='deleteBtn'; btn.onclick=()=>deleteTimeTask(i); li.appendChild(btn); tList.appendChild(li);});
-  const rList=document.getElementById('repTaskList'); rList.innerHTML=''; let rTasks=JSON.parse(localStorage.getItem('repTasks'))||[]; rTasks.forEach((t,i)=>{let li=document.createElement('li'); li.textContent=t.repDate?`${t.task} (Every month on ${t.repDate})`:`${t.task} (${t.frequency} ${t.day})`; let btn=document.createElement('button'); btn.textContent='X'; btn.className='deleteBtn'; btn.onclick=()=>deleteRepTask(i); li.appendChild(btn); rList.appendChild(li);});
-  const bList=document.getElementById('bdayList'); bList.innerHTML=''; let bTasks=JSON.parse(localStorage.getItem('bdayTasks'))||[]; bTasks.forEach((t,i)=>{let li=document.createElement('li'); li.textContent=`${t.name} (Date: ${t.date})`; let btn=document.createElement('button'); btn.textContent='X'; btn.className='deleteBtn'; btn.onclick=()=>deleteBday(i); li.appendChild(btn); bList.appendChild(li);});
-  const eList=document.getElementById('everydayList'); eList.innerHTML=''; let eTasks=JSON.parse(localStorage.getItem('everydayTasks'))||[]; eTasks.forEach((t,i)=>{let li=document.createElement('li'); li.textContent=t.task; let btn=document.createElement('button'); btn.textContent='X'; btn.className='deleteBtn'; btn.onclick=()=>deleteEverydayTask(i); li.appendChild(btn); eList.appendChild(li);});
+  // Time-bound
+  const tList=document.getElementById('timeTaskList'); tList.innerHTML='';
+  let tTasks=JSON.parse(localStorage.getItem('timeTasks'))||[];
+  tTasks.forEach((t,i)=>{
+    let li=document.createElement('li');
+    li.textContent=`${t.task} (Due: ${t.date})`;
+    let btn=document.createElement('button'); btn.textContent='X'; btn.className='deleteBtn'; btn.onclick=()=>deleteTimeTask(i);
+    li.appendChild(btn); tList.appendChild(li);
+  });
+
+  // Repetitive
+  const rList=document.getElementById('repTaskList'); rList.innerHTML='';
+  let rTasks=JSON.parse(localStorage.getItem('repTasks'))||[];
+  rTasks.forEach((t,i)=>{
+    let li=document.createElement('li');
+    if(t.repDate){
+      li.textContent=`${t.task} (Every month on ${t.repDate})`;
+    } else if(t.weekly){
+      li.textContent=`${t.task} (Every ${t.weekday})`;
+    } else {
+      li.textContent=t.task;
+    }
+    let btn=document.createElement('button'); btn.textContent='X'; btn.className='deleteBtn'; btn.onclick=()=>deleteRepTask(i);
+    li.appendChild(btn); rList.appendChild(li);
+  });
+
+  // Birthdays
+  const bList=document.getElementById('bdayList'); bList.innerHTML='';
+  let bTasks=JSON.parse(localStorage.getItem('bdayTasks'))||[];
+  bTasks.forEach((t,i)=>{
+    let li=document.createElement('li');
+    li.textContent=`${t.name} (Date: ${t.date})`;
+    let btn=document.createElement('button'); btn.textContent='X'; btn.className='deleteBtn'; btn.onclick=()=>deleteBday(i);
+    li.appendChild(btn); bList.appendChild(li);
+  });
+
+  // Everyday
+  const eList=document.getElementById('everydayList'); eList.innerHTML='';
+  let eTasks=JSON.parse(localStorage.getItem('everydayTasks'))||[];
+  eTasks.forEach((t,i)=>{
+    let li=document.createElement('li');
+    li.textContent=t.task;
+    let btn=document.createElement('button'); btn.textContent='X'; btn.className='deleteBtn'; btn.onclick=()=>deleteEverydayTask(i);
+    li.appendChild(btn); eList.appendChild(li);
+  });
 }
 </script>
 </body>
