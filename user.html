@@ -33,8 +33,6 @@ button {
 }
 .generate {background-color: #28a745;color:#fff;}
 .copy {background-color:#007bff;color:#fff;}
-.addTask {background-color:#ff9800;color:#fff;}
-input, select {padding:5px;margin:5px;border-radius:4px;border:none;}
 
 /* login overlay */
 #loginOverlay{
@@ -71,34 +69,7 @@ input, select {padding:5px;margin:5px;border-radius:4px;border:none;}
 
 <!-- CONTENT -->
 <div id="protectedContent" style="display:none;">
-  <h1>Generate Your Tasks For Today</h1>
-  
-  <h2>Add New Task</h2>
-  <div>
-    <input type="text" id="taskName" placeholder="Task name">
-    <select id="taskType">
-      <option value="time">Time-bound</option>
-      <option value="weekly">Weekly</option>
-      <option value="monthly">Monthly</option>
-      <option value="birthday">Birthday/Anniversary</option>
-      <option value="everyday">Everyday</option>
-    </select>
-    <input type="date" id="taskDate">
-    <select id="taskWeekday">
-      <option value="">Select day</option>
-      <option value="sun">Sun</option><option value="mon">Mon</option><option value="tue">Tue</option>
-      <option value="wed">Wed</option><option value="thu">Thu</option><option value="fri">Fri</option>
-      <option value="sat">Sat</option>
-    </select>
-    <select id="taskRepDate">
-      <option value="">Day of month</option>
-      <!-- 1-31 -->
-      <script>for(let i=1;i<=31;i++){document.write(`<option value="${i}">${i}</option>`);}</script>
-    </select>
-    <button class="addTask" onclick="addTask()">Add Task</button>
-  </div>
-
-  <h2>Today's Tasks</h2>
+  <h1>Today's Tasks</h1>
   <button class="generate" onclick="generateTasks()">Generate</button>
   <textarea id="taskBox" placeholder="Your tasks will appear here..."></textarea><br>
   <button class="copy" onclick="copyTask()">Copy to Clipboard</button>
@@ -125,52 +96,6 @@ window.onload=function(){
   }
 };
 
-// ---------- ADD TASK ----------
-function addTask(){
-  const name = document.getElementById('taskName').value.trim();
-  const type = document.getElementById('taskType').value;
-  const date = document.getElementById('taskDate').value;
-  const weekday = document.getElementById('taskWeekday').value;
-  const repDate = document.getElementById('taskRepDate').value;
-
-  if(!name){alert("Enter task name!"); return;}
-
-  if(type==='time'){
-    let arr = JSON.parse(localStorage.getItem('timeTasks')||'[]');
-    if(!date){alert("Select date for time-bound task"); return;}
-    arr.push({task:name,date:date});
-    localStorage.setItem('timeTasks',JSON.stringify(arr));
-  }
-  if(type==='weekly'){
-    let arr = JSON.parse(localStorage.getItem('repTasks')||'[]');
-    if(!weekday){alert("Select weekday"); return;}
-    arr.push({task:name,weekly:true,weekday:weekday});
-    localStorage.setItem('repTasks',JSON.stringify(arr));
-  }
-  if(type==='monthly'){
-    let arr = JSON.parse(localStorage.getItem('repTasks')||'[]');
-    if(!repDate){alert("Select day of month"); return;}
-    arr.push({task:name,repDate:repDate});
-    localStorage.setItem('repTasks',JSON.stringify(arr));
-  }
-  if(type==='birthday'){
-    let arr = JSON.parse(localStorage.getItem('bdayTasks')||'[]');
-    if(!date){alert("Select date"); return;}
-    arr.push({name:name,date:date});
-    localStorage.setItem('bdayTasks',JSON.stringify(arr));
-  }
-  if(type==='everyday'){
-    let arr = JSON.parse(localStorage.getItem('everydayTasks')||'[]');
-    arr.push({task:name});
-    localStorage.setItem('everydayTasks',JSON.stringify(arr));
-  }
-  alert("Task added!");
-  document.getElementById('taskName').value='';
-  document.getElementById('taskDate').value='';
-  document.getElementById('taskWeekday').value='';
-  document.getElementById('taskRepDate').value='';
-}
-
 // ---------- TASK GENERATION ----------
 function generateTasks() {
   const today = new Date();
@@ -191,7 +116,7 @@ function generateTasks() {
   // REPETITIVE TASKS
   let repTasks = JSON.parse(localStorage.getItem('repTasks')) || [];
   repTasks.forEach(t=>{
-    // monthly
+    // Monthly tasks (by date)
     if(t.repDate){
       for(let advance=0;advance<=2;advance++){
         const checkDate = new Date(today.getFullYear(),today.getMonth(),today.getDate()+advance);
@@ -201,7 +126,7 @@ function generateTasks() {
         }
       }
     }
-    // weekly
+    // Weekly tasks (every week)
     if(t.weekly && t.weekday){
       const dayNames=["sun","mon","tue","wed","thu","fri","sat"];
       const wantedDay = dayNames.indexOf(t.weekday.toLowerCase().slice(0,3));
@@ -215,7 +140,7 @@ function generateTasks() {
     }
   });
 
-  // BIRTHDAYS
+  // BIRTHDAYS / ANNIVERSARIES
   let bTasks = JSON.parse(localStorage.getItem('bdayTasks')) || [];
   bTasks.forEach(t=>{
     const due = new Date(today.getFullYear(), new Date(t.date).getMonth(), new Date(t.date).getDate());
