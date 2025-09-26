@@ -116,7 +116,7 @@ function generateTasks() {
   // REPETITIVE TASKS
   let repTasks = JSON.parse(localStorage.getItem('repTasks')) || [];
   repTasks.forEach(t=>{
-    // Monthly tasks (by date)
+    // Monthly tasks
     if(t.repDate){
       for(let advance=0;advance<=2;advance++){
         const checkDate = new Date(today.getFullYear(),today.getMonth(),today.getDate()+advance);
@@ -126,15 +126,18 @@ function generateTasks() {
         }
       }
     }
-    // Weekly tasks (every week)
+    // Weekly tasks (fixed)
     if(t.weekly && t.weekday){
       const dayNames=["sun","mon","tue","wed","thu","fri","sat"];
       const wantedDay = dayNames.indexOf(t.weekday.toLowerCase().slice(0,3));
-      for(let advance=0;advance<=2;advance++){
+      for(let advance=0;advance<=7;advance++){
         const checkDate = new Date(today.getFullYear(),today.getMonth(),today.getDate()+advance);
         if(checkDate.getDay()===wantedDay){
-          const label = advance===0 ? "(Due today)" : `(In ${advance} day${advance>1?'s':''})`;
-          tasks.push(`${t.task} ${label}`);
+          if(advance<=2){ // show if today or within 2-day advance
+            const label = advance===0 ? "(Due today)" : `(In ${advance} day${advance>1?'s':''})`;
+            tasks.push(`${t.task} ${label}`);
+          }
+          break; // stop after first upcoming occurrence
         }
       }
     }
